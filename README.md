@@ -114,6 +114,19 @@ python orchestrator.py \
   --dashboard-url "http://localhost:3000/api/trpc"
 ```
 
+**Pendant l'entraînement, vous verrez :**
+- 📊 Barre de progression en temps réel
+- 📈 Métriques de qualité (Coder A, Coder B, Arbitre)
+- 💾 Tokens traités
+- 🏆 Décisions de l'arbitre
+- ✅ Sauvegarde automatique du modèle
+- 📄 Export au format Ollama (GGUF)
+
+**Commandes pendant l'entraînement :**
+- `[P]` - Pause/Reprendre
+- `[S]` - Arrêter proprement
+- `[I]` - Afficher les infos détaillées
+
 #### Mode full codage (scrape uniquement du code)
 ```bash
 python orchestrator.py \
@@ -122,6 +135,8 @@ python orchestrator.py \
   --iterations 10 \
   --code-only
 ```
+
+Le visualiseur affichera le progrès en direct avec les métriques d'apprentissage.
 
 #### Sans intégration (mode standalone)
 ```bash
@@ -155,7 +170,25 @@ IAtrainer/
 └── README.md                  # Cette documentation
 ```
 
-## 🔄 Flux de Travail
+## 📊 Visualisation en temps réel
+
+Pendant l'entraînement, le système affiche un tableau de bord en direct avec :
+- Barre de progression en pourcentage
+- Métriques de qualité pour chaque agent
+- Tokens traités
+- Décisions de l'arbitre
+- Commandes pour pause/arrêt
+
+### Sauvegarder et arrêter l'entraînement
+
+L'entraînement sauvegarde automatiquement :
+1. Les données d'entraînement (JSON)
+2. Le modèle au format Ollama (GGUF)
+3. Les métriques et apprentissages
+
+Fichiers générés dans le dossier `trained_models/`
+
+## 📊 Flux de Travail
 
 ### 1. Scraping
 ```

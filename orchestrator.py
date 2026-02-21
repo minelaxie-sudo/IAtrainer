@@ -9,6 +9,7 @@ from typing import List, Dict, Optional
 from scraper import WebScraper
 from multi_agent_system import MultiAgentSystem
 from trpc_client import TRPCClient
+from training_visualizer import TrainingVisualizer
 
 logging.basicConfig(
     level=logging.INFO,
@@ -30,6 +31,7 @@ class IAtrainerOrchestrator:
         self.trpc_client = TRPCClient(dashboard_url)
         self.model_name = model_name
         self.training_data: List[Dict] = []
+        self.visualizer = TrainingVisualizer(model_name)
 
     def scrape_training_data(self, topic: str, num_pages: int = 5, code_only: bool = False) -> List[Dict]:
         """
@@ -128,6 +130,7 @@ class IAtrainerOrchestrator:
 
             # Étape 4: Exécuter les itérations
             logger.info(f"\n[ÉTAPE 4] Exécution de {num_iterations} itérations...")
+            self.visualizer.start_training(num_iterations)
 
             for iteration in range(num_iterations):
                 task = tasks[iteration % len(tasks)]
@@ -135,6 +138,18 @@ class IAtrainerOrchestrator:
 
                 # Exécuter l'itération
                 result = self.multi_agent_system.run_iteration(task, context)
+
+                # Mettre à jour le visualiseur
+                self.visualizer.update_iteration(
+                    iteration=iteration + 1,
+                    coder_a_solution=result.get("solution_a", ""),
+                    coder_b_solution=result.get("solution_b", ""),
+                    arbiter_decision=result.get("decision", {}).get("selected_solution", ""),
+                    coder_a_quality=result.get("solution_a_quality", 0.5),
+                    coder_b_quality=result.get("solution_b_quality", 0.5),
+                    arbiter_quality=result.get("decision", {}).get("quality_score", 0.5),
+                    tokens_processed=len(task.split()) + len(context.split()),
+                )
 
                 # Envoyer les données au dashboard
                 if dashboard_enabled and session_id:
@@ -149,24 +164,23 @@ class IAtrainerOrchestrator:
             logger.info("\n[ÉTAPE 5] Génération du résumé...")
             summary = self.multi_agent_system.get_session_summary()
 
+            # Afficher le résumé du visualiseur
+            self.visualizer.display_summary()
+
+            # Sauvegarder le modèle
+            model_file = self.visualizer.save_model()
+            gguf_file = self.visualizer.export_for_ollama()
+
             if dashboard_enabled and session_id:
                 self.trpc_client.update_session_status("completed")
-
-            logger.info(f"\n{'='*70}")
-            logger.info("RÉSUMÉ DE LA SESSION")
-            logger.info(f"{'='*70}")
-            logger.info(f"Itérations: {summary['iterations']}")
-            logger.info(f"Messages totaux: {summary['total_messages']}")
-            logger.info(f"Décisions: {summary['total_decisions']}")
-            logger.info(f"Qualité Coder A: {summary['coder_a_metrics']['avg_quality_score']:.2f}")
-            logger.info(f"Qualité Coder B: {summary['coder_b_metrics']['avg_quality_score']:.2f}")
-            logger.info(f"Qualité Arbitre: {summary['arbiter_metrics']['avg_decision_quality']:.2f}")
 
             return {
                 "status": "completed",
                 "session_id": session_id,
                 "summary": summary,
                 "training_data_count": len(self.training_data),
+                "model_file": model_file,
+                "gguf_file": gguf_file,
             }
 
         except Exception as e:
