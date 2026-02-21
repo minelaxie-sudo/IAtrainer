@@ -93,23 +93,27 @@ class WebScraper:
                 "error": str(e),
             }
 
-    def scrape_topic(self, topic: str, num_pages: int = 5) -> List[Dict]:
+    def scrape_topic(self, topic: str, num_pages: int = 5, code_only: bool = False) -> List[Dict]:
         """
         Scrape plusieurs pages sur un sujet donné.
+        Si code_only=True, scrape uniquement du code (GitHub, etc.)
         """
-        logger.info(f"Scraping du sujet: {topic}")
+        logger.info(f"Scraping du sujet: {topic} (code_only={code_only})")
         all_data = []
 
-        # Rechercher les URLs
-        search_results = self.search_google(topic, num_results=num_pages)
+        if code_only:
+            # Scraper GitHub pour du code
+            search_results = self.scrape_github(topic, num_results=num_pages)
+        else:
+            # Rechercher les URLs normales
+            search_results = self.search_google(topic, num_results=num_pages)
 
-        # Scraper chaque URL
+        # Scraper chaque URL (sans délai pour aller au plus rapide)
         for idx, result in enumerate(search_results):
             logger.info(f"Scraping {idx + 1}/{len(search_results)}: {result['url']}")
             content = self.scrape_url(result["url"])
             if content["success"]:
                 all_data.append(content)
-            time.sleep(1)  # Respecter les serveurs
 
         logger.info(f"Scraping terminé: {len(all_data)} pages récupérées")
         return all_data

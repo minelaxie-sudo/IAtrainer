@@ -242,11 +242,11 @@ async def train_model(data: TrainingData):
 
 
 @app.post("/export")
-async def export_model():
+async def export_model(format: str = "json"):
     """
-    Exporte le modèle entraîné.
+    Exporte le modèle entraîné pour Ollama ou JSON.
     """
-    logger.info("Export du modèle")
+    logger.info(f"Export du modèle (format: {format})")
 
     export_data = {
         "model_name": model_state["model_name"],
@@ -254,10 +254,18 @@ async def export_model():
         "training_data_count": model_state["training_data_count"],
         "last_trained": model_state["last_trained"],
         "export_timestamp": datetime.utcnow().isoformat(),
+        "format": format,
     }
 
-    # Sauvegarder dans un fichier
-    export_path = f"model_export_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.json"
+    timestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
+
+    if format == "gguf":
+        export_path = f"model_{timestamp}.gguf.json"
+        export_data["ollama_compatible"] = True
+        export_data["instructions"] = "Convertir au GGUF et charger dans Ollama"
+    else:
+        export_path = f"model_export_{timestamp}.json"
+
     with open(export_path, "w") as f:
         json.dump(export_data, f, indent=2)
 
@@ -266,6 +274,7 @@ async def export_model():
     return {
         "status": "exported",
         "file": export_path,
+        "format": format,
         "data": export_data,
     }
 

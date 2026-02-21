@@ -1,14 +1,14 @@
 # IAtrainer - Système d'Entraînement Multi-Agents
 
-Un système complet d'entraînement d'un modèle LLM spécialisé dans la génération de code Unity/Unreal, utilisant un système multi-agents (Coder A, Coder B, Arbitre) qui scrape automatiquement internet pour les données d'entraînement.
+Un système complet pour entraîner un modèle LLM libre (Llama, Mistral, etc.) spécialisé dans la génération de code, utilisant un système multi-agents (Coder A, Coder B, Arbitre) qui scrape automatiquement internet. Le modèle entraîné est directement utilisable avec **Ollama** et s'intègre parfaitement avec **UnityIAPro** pour générer automatiquement du code Unity/Unreal.
 
 ## 🎯 Fonctionnalités
 
 ### 🕷️ Web Scraping Gratuit
 - **Scrape automatique** depuis DuckDuckGo, GitHub et Stack Overflow
 - **Sans API payante** - utilise BeautifulSoup et requests
-- **Extraction intelligente** de contenu et d'exemples de code
-- **Respecte les serveurs** avec délais entre les requêtes
+- **Au plus rapide** - pas de délais inutiles
+- **Option code-only** - scrape uniquement du code pour un modèle full codage
 
 ### 🤖 Système Multi-Agents
 - **Coder A** : Génère une première solution
@@ -20,7 +20,7 @@ Un système complet d'entraînement d'un modèle LLM spécialisé dans la géné
 - **Fine-tuning** automatique avec les données scrapées
 - **Métriques** de performance en temps réel
 - **Persistance** des décisions et apprentissages
-- **Export** du modèle entraîné
+- **Export au format Ollama** (GGUF) pour utilisation directe
 
 ### 🔗 Intégration UnityIAPro
 - **Synchronisation en temps réel** avec le dashboard
@@ -33,7 +33,7 @@ Un système complet d'entraînement d'un modèle LLM spécialisé dans la géné
 - **Analyse de code** (qualité, sécurité, performance)
 - **Comparaison** de solutions
 - **Entraînement** du modèle
-- **Export** du modèle
+- **Export au format Ollama** (GGUF) pour utilisation directe
 
 ## 📦 Installation
 
@@ -75,6 +75,15 @@ python orchestrator.py \
   --dashboard-url "http://localhost:3000/api/trpc"
 ```
 
+#### Mode full codage (scrape uniquement du code)
+```bash
+python orchestrator.py \
+  --topic "C# optimization" \
+  --pages 5 \
+  --iterations 10 \
+  --code-only
+```
+
 #### Sans intégration (mode standalone)
 ```bash
 python orchestrator.py \
@@ -91,6 +100,7 @@ python orchestrator.py \
 --iterations INT          Nombre d'itérations d'entraînement (défaut: 3)
 --dashboard-url TEXT      URL du dashboard UnityIAPro (défaut: http://localhost:3000/api/trpc)
 --no-dashboard           Désactiver l'intégration avec le dashboard
+--code-only              Scraper uniquement du code (GitHub, etc.) pour un modèle full codage
 ```
 
 ## 📚 Architecture
@@ -173,6 +183,18 @@ curl -X POST http://localhost:8000/train \
   }'
 ```
 
+### Exporter le modèle pour Ollama
+```bash
+curl -X POST http://localhost:8000/export?format=gguf
+```
+
+Le modèle est exporté au format GGUF, directement utilisable avec Ollama :
+```bash
+# Charger le modèle dans Ollama
+ollama create mon-modele -f Modelfile
+ollama run mon-modele "Générer du code Unity"
+```
+
 ## 🔗 Intégration avec UnityIAPro
 
 ### Prérequis
@@ -206,7 +228,7 @@ Après une session d'entraînement, vous obtenez :
 - **Décisions** : Choix de l'arbitre avec justifications
 - **Métriques** : Performance de chaque agent
 - **Logs** : Historique complet des interactions
-- **Modèle** : Modèle entraîné prêt à l'emploi
+- **Modèle** : Modèle entraîné prêt à l'emploi avec Ollama
 
 ## 🛠️ Développement
 
@@ -253,7 +275,7 @@ Exemple :
 
 ### Le scraping est lent
 - Réduire le nombre de pages avec `--pages 1`
-- Les délais entre requêtes sont intentionnels (respect des serveurs)
+- Les délais ont été supprimés pour aller au plus rapide
 
 ### L'API HTTP ne démarre pas
 - Vérifier que le port 8000 est disponible
@@ -273,8 +295,9 @@ Pour toute question ou problème :
 ## 🎓 Apprentissage
 
 Ce projet démontre :
-- Web scraping gratuit sans API payante
+- Web scraping gratuit sans API payante, au plus rapide
 - Systèmes multi-agents collaboratifs
-- Fine-tuning de modèles LLM
+- Fine-tuning de modèles LLM libres
+- Export au format Ollama (GGUF)
 - Intégration temps réel avec dashboards
 - Architecture modulaire et extensible

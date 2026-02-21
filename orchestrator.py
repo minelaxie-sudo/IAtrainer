@@ -31,16 +31,17 @@ class IAtrainerOrchestrator:
         self.model_name = model_name
         self.training_data: List[Dict] = []
 
-    def scrape_training_data(self, topic: str, num_pages: int = 5) -> List[Dict]:
+    def scrape_training_data(self, topic: str, num_pages: int = 5, code_only: bool = False) -> List[Dict]:
         """
         Scrape les données d'entraînement depuis internet.
+        Si code_only=True, scrape uniquement du code (GitHub, etc.)
         """
         logger.info(f"\n{'='*60}")
-        logger.info(f"SCRAPING: {topic}")
+        logger.info(f"SCRAPING: {topic} (code_only={code_only})")
         logger.info(f"{'='*60}")
 
         # Scraper le sujet
-        self.training_data = self.scraper.scrape_topic(topic, num_pages)
+        self.training_data = self.scraper.scrape_topic(topic, num_pages, code_only=code_only)
 
         logger.info(f"✓ {len(self.training_data)} pages scrapées")
 
@@ -73,6 +74,7 @@ class IAtrainerOrchestrator:
         num_pages: int = 5,
         num_iterations: int = 3,
         dashboard_enabled: bool = True,
+        code_only: bool = False,
     ) -> Dict:
         """
         Lance une session d'entraînement complète.
@@ -89,7 +91,7 @@ class IAtrainerOrchestrator:
         try:
             # Étape 1: Scraper les données
             logger.info("\n[ÉTAPE 1] Scraping des données...")
-            self.scrape_training_data(topic, num_pages)
+            self.scrape_training_data(topic, num_pages, code_only=code_only)
 
             # Étape 2: Créer une session dans le dashboard
             if dashboard_enabled:
@@ -267,6 +269,11 @@ def main():
         action="store_true",
         help="Désactiver l'intégration avec le dashboard",
     )
+    parser.add_argument(
+        "--code-only",
+        action="store_true",
+        help="Scraper uniquement du code (GitHub, etc.) pour un modèle full codage",
+    )
 
     args = parser.parse_args()
 
@@ -282,6 +289,7 @@ def main():
         num_pages=args.pages,
         num_iterations=args.iterations,
         dashboard_enabled=not args.no_dashboard,
+        code_only=args.code_only,
     )
 
     # Afficher le résultat final
