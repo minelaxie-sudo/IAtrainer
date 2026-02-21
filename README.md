@@ -76,11 +76,32 @@ pip install selenium
 ## 🚀 Utilisation
 
 ### 1. Lancer l'API du modèle (optionnel)
+
+**L'API sert à :**
+- Générer du code basé sur des prompts
+- Analyser du code (qualité, sécurité, performance)
+- Comparer deux solutions de code
+- Entraîner le modèle avec de nouvelles données
+- Exporter le modèle au format Ollama (GGUF)
+
+**Lancer l'API avec configuration interactive :**
 ```bash
 python model_api.py
-# L'API démarre sur http://localhost:8000
-# Documentation: http://localhost:8000/docs
 ```
+
+Un menu interactif s'affichera pour configurer :
+- Nom du modèle
+- Nombre de tokens par défaut
+- Température
+- Top-P
+- Host et port
+
+Après configuration, l'API démarre sur `http://localhost:8000`
+
+**Accéder à l'API :**
+- Documentation interactive: http://localhost:8000/docs
+- Vérifier l'état: http://localhost:8000/health
+- Configuration: http://localhost:8000/config
 
 ### 2. Lancer une session d'entraînement
 
@@ -158,6 +179,11 @@ Résultats → UnityIAPro Dashboard
 ```
 
 ## 📡 API HTTP
+
+### Mettre à jour la configuration
+```bash
+curl -X POST "http://localhost:8000/config/update?model_name=mistral&max_tokens=1024&temperature=0.8"
+```
 
 ### Générer du code
 ```bash

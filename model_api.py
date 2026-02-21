@@ -1,6 +1,22 @@
 """
 API HTTP locale pour utiliser le modèle LLM entraîné.
 Permet d'utiliser le modèle indépendamment d'UnityIAPro.
+
+À QUOI ÇA SERT :
+- Générer du code basé sur des prompts
+- Analyser du code (qualité, sécurité, performance)
+- Comparer deux solutions de code
+- Entraîner le modèle avec de nouvelles données
+- Exporter le modèle au format Ollama (GGUF)
+
+ENDPOINTS :
+- GET /health : Vérifier l'état de l'API
+- GET /model/info : Obtenir les infos du modèle
+- POST /generate : Générer du code
+- POST /analyze : Analyser du code
+- POST /compare : Comparer deux solutions
+- POST /train : Entraîner le modèle
+- POST /export : Exporter le modèle
 """
 
 from fastapi import FastAPI, HTTPException
@@ -14,9 +30,19 @@ import os
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Configuration globale
+config = {
+    "model_name": "llama2-unity",
+    "max_tokens_default": 512,
+    "temperature_default": 0.7,
+    "top_p_default": 0.9,
+    "host": "127.0.0.1",
+    "port": 8000,
+}
+
 app = FastAPI(
     title="IAtrainer Model API",
-    description="API locale pour utiliser le modèle LLM entraîné",
+    description="API locale pour générer, analyser et entraîner des modèles LLM. Génère du code, analyse la qualité, compare les solutions, entraîne avec de nouvelles données, exporte en format Ollama.",
     version="1.0.0",
 )
 
@@ -77,7 +103,7 @@ class TrainingData(BaseModel):
 # État du modèle
 model_state = {
     "is_loaded": False,
-    "model_name": "llama2-unity",
+    "model_name": config["model_name"],
     "training_iterations": 0,
     "last_trained": None,
     "training_data_count": 0,
@@ -87,9 +113,37 @@ model_state = {
 @app.on_event("startup")
 async def startup_event():
     """Initialisation au démarrage."""
+    logger.info("=" * 70)
     logger.info("API IAtrainer démarrée")
+    logger.info("=" * 70)
     logger.info(f"Modèle: {model_state['model_name']}")
+    logger.info(f"Configuration:")
+    logger.info(f"  - Max tokens par défaut: {config['max_tokens_default']}")
+    logger.info(f"  - Température par défaut: {config['temperature_default']}")
+    logger.info(f"  - Top-P par défaut: {config['top_p_default']}")
+    logger.info("=" * 70)
     model_state["is_loaded"] = True
+
+
+@app.get("/")
+async def root():
+    """Page d'accueil avec documentation."""
+    return {
+        "title": "IAtrainer Model API",
+        "description": "API locale pour générer, analyser et entraîner des modèles LLM",
+        "docs": "http://localhost:8000/docs",
+        "endpoints": {
+            "GET /health": "Vérifier l'état de l'API",
+            "GET /model/info": "Obtenir les informations du modèle",
+            "POST /generate": "Générer du code",
+            "POST /analyze": "Analyser du code",
+            "POST /compare": "Comparer deux solutions",
+            "POST /train": "Entraîner le modèle",
+            "POST /export": "Exporter le modèle",
+            "GET /config": "Voir la configuration actuelle",
+            "POST /config/update": "Mettre à jour la configuration",
+        },
+    }
 
 
 @app.get("/health")
@@ -112,6 +166,50 @@ async def get_model_info():
         "training_iterations": model_state["training_iterations"],
         "last_trained": model_state["last_trained"],
         "training_data_count": model_state["training_data_count"],
+    }
+
+
+@app.get("/config")
+async def get_config():
+    """Obtenir la configuration actuelle."""
+    return {
+        "model_name": config["model_name"],
+        "max_tokens_default": config["max_tokens_default"],
+        "temperature_default": config["temperature_default"],
+        "top_p_default": config["top_p_default"],
+        "host": config["host"],
+        "port": config["port"],
+    }
+
+
+@app.post("/config/update")
+async def update_config(
+    model_name: Optional[str] = None,
+    max_tokens: Optional[int] = None,
+    temperature: Optional[float] = None,
+    top_p: Optional[float] = None,
+):
+    """Mettre à jour la configuration."""
+    if model_name:
+        config["model_name"] = model_name
+        model_state["model_name"] = model_name
+        logger.info(f"Modèle changé en: {model_name}")
+
+    if max_tokens:
+        config["max_tokens_default"] = max_tokens
+        logger.info(f"Max tokens changé en: {max_tokens}")
+
+    if temperature is not None:
+        config["temperature_default"] = temperature
+        logger.info(f"Température changée en: {temperature}")
+
+    if top_p is not None:
+        config["top_p_default"] = top_p
+        logger.info(f"Top-P changé en: {top_p}")
+
+    return {
+        "status": "updated",
+        "config": config,
     }
 
 
@@ -279,25 +377,114 @@ async def export_model(format: str = "json"):
     }
 
 
-@app.get("/docs")
-async def get_documentation():
-    """Obtenir la documentation de l'API."""
-    return {
-        "title": "IAtrainer Model API",
-        "version": "1.0.0",
-        "endpoints": {
-            "GET /health": "Vérifier l'état de l'API",
-            "GET /model/info": "Obtenir les informations du modèle",
-            "POST /generate": "Générer du code",
-            "POST /analyze": "Analyser du code",
-            "POST /compare": "Comparer deux solutions",
-            "POST /train": "Entraîner le modèle",
-            "POST /export": "Exporter le modèle",
-        },
-    }
+def interactive_configuration():
+    """Configuration interactive en console."""
+    print("\n" + "=" * 70)
+    print("CONFIGURATION DE L'API IATRAINER")
+    print("=" * 70)
+
+    while True:
+        print("\nOptions disponibles:")
+        print("1. Voir la configuration actuelle")
+        print("2. Changer le nom du modèle")
+        print("3. Changer le nombre de tokens par défaut")
+        print("4. Changer la température par défaut")
+        print("5. Changer le Top-P par défaut")
+        print("6. Changer le host")
+        print("7. Changer le port")
+        print("8. Démarrer l'API")
+        print("9. Quitter")
+
+        choice = input("\nChoisissez une option (1-9): ").strip()
+
+        if choice == "1":
+            print("\nConfiguration actuelle:")
+            for key, value in config.items():
+                print(f"  {key}: {value}")
+
+        elif choice == "2":
+            new_name = input("Nouveau nom du modèle (ex: llama2-unity): ").strip()
+            if new_name:
+                config["model_name"] = new_name
+                model_state["model_name"] = new_name
+                print(f"✓ Modèle changé en: {new_name}")
+
+        elif choice == "3":
+            try:
+                new_tokens = int(input("Nouveau nombre de tokens par défaut (ex: 512): ").strip())
+                config["max_tokens_default"] = new_tokens
+                print(f"✓ Max tokens changé en: {new_tokens}")
+            except ValueError:
+                print("✗ Veuillez entrer un nombre valide")
+
+        elif choice == "4":
+            try:
+                new_temp = float(input("Nouvelle température par défaut (0.0-2.0, ex: 0.7): ").strip())
+                if 0.0 <= new_temp <= 2.0:
+                    config["temperature_default"] = new_temp
+                    print(f"✓ Température changée en: {new_temp}")
+                else:
+                    print("✗ La température doit être entre 0.0 et 2.0")
+            except ValueError:
+                print("✗ Veuillez entrer un nombre valide")
+
+        elif choice == "5":
+            try:
+                new_top_p = float(input("Nouveau Top-P par défaut (0.0-1.0, ex: 0.9): ").strip())
+                if 0.0 <= new_top_p <= 1.0:
+                    config["top_p_default"] = new_top_p
+                    print(f"✓ Top-P changé en: {new_top_p}")
+                else:
+                    print("✗ Le Top-P doit être entre 0.0 et 1.0")
+            except ValueError:
+                print("✗ Veuillez entrer un nombre valide")
+
+        elif choice == "6":
+            new_host = input("Nouveau host (ex: 127.0.0.1 ou 0.0.0.0): ").strip()
+            if new_host:
+                config["host"] = new_host
+                print(f"✓ Host changé en: {new_host}")
+
+        elif choice == "7":
+            try:
+                new_port = int(input("Nouveau port (ex: 8000): ").strip())
+                if 1 <= new_port <= 65535:
+                    config["port"] = new_port
+                    print(f"✓ Port changé en: {new_port}")
+                else:
+                    print("✗ Le port doit être entre 1 et 65535")
+            except ValueError:
+                print("✗ Veuillez entrer un nombre valide")
+
+        elif choice == "8":
+            print("\n" + "=" * 70)
+            print("DÉMARRAGE DE L'API")
+            print("=" * 70)
+            print(f"Host: {config['host']}")
+            print(f"Port: {config['port']}")
+            print(f"Modèle: {config['model_name']}")
+            print("=" * 70)
+            print("\nPour accéder à l'API:")
+            print(f"  - Documentation: http://{config['host']}:{config['port']}/docs")
+            print(f"  - Health check: http://{config['host']}:{config['port']}/health")
+            print(f"  - Config: http://{config['host']}:{config['port']}/config")
+            print("\nAppuyez sur CTRL+C pour arrêter l'API\n")
+
+            import uvicorn
+            uvicorn.run(
+                app,
+                host=config["host"],
+                port=config["port"],
+                log_level="info",
+            )
+
+        elif choice == "9":
+            print("Au revoir!")
+            break
+
+        else:
+            print("✗ Option invalide, veuillez choisir entre 1 et 9")
 
 
 if __name__ == "__main__":
-    import uvicorn
-
-    uvicorn.run(app, host="0.0.0.0", port=8000, log_level="info")
+    interactive_configuration()
