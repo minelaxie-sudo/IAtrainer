@@ -170,6 +170,35 @@ IAtrainer/
 └── README.md                  # Cette documentation
 ```
 
+## 📊 Mettre un modèle de base
+
+**Avant de commencer l'entraînement, vous devez avoir un modèle de base.**
+
+### Méthode 1 : Gestionnaire interactif (RECOMMANDÉ)
+
+```bash
+python model_manager.py
+```
+
+Menu interactif pour :
+- Charger un modèle de base
+- Télécharger depuis Hugging Face (ex: `meta-llama/Llama-2-7b`)
+- Télécharger depuis Ollama (ex: `llama2`, `mistral`)
+- Créer un template de modèle personnalisé
+
+### Méthode 2 : Copier manuellement
+
+Placez votre modèle dans le dossier `base_models/` :
+
+```
+base_models/
+├── llama2-7b.gguf
+├── mistral-7b.bin
+└── custom-model.json
+```
+
+**Voir `MODELS_SETUP.md` pour les détails complets.**
+
 ## 📊 Visualisation en temps réel
 
 Pendant l'entraînement, le système affiche un tableau de bord en direct avec :
