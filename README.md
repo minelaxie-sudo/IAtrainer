@@ -57,16 +57,21 @@ pip install -r requirements.txt
 
 ### Dépendances optionnelles
 
-Pour le fine-tuning réel (optionnel) :
+Pour le fine-tuning réel avec PyTorch (optionnel) :
 ```bash
 # CPU uniquement
 pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
 
 # Transformers pour fine-tuning
-pip install transformers scikit-learn
+pip install transformers scikit-learn pydantic
 ```
 
-**Note** : Les dépendances principales fonctionnent sans torch.
+Pour Selenium avec navigateur (scraping avancé, optionnel) :
+```bash
+pip install selenium
+```
+
+**Note** : Les dépendances principales (scraping, API, multi-agents) fonctionnent sans ces packages optionnels.
 
 ## 🚀 Utilisation
 
