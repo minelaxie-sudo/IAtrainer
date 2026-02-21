@@ -1,183 +1,179 @@
 """
-Script d'initialisation des modèles de test.
-Crée des modèles de base sans dépendances externes.
+Script d'initialisation des modèles réels.
+Télécharge les vrais modèles depuis Hugging Face.
 """
 
-import json
 import os
-from datetime import datetime
+import json
+import subprocess
+import sys
+from pathlib import Path
 
 
-def create_test_models():
-    """Crée des modèles de test dans base_models/."""
+def install_huggingface_hub():
+    """Installe huggingface_hub si nécessaire."""
+    try:
+        import huggingface_hub
+        return True
+    except ImportError:
+        print("📦 Installation de huggingface_hub...")
+        try:
+            subprocess.check_call([sys.executable, "-m", "pip", "install", "huggingface_hub", "-q"])
+            print("✓ huggingface_hub installé")
+            return True
+        except Exception as e:
+            print(f"✗ Erreur lors de l'installation: {e}")
+            return False
+
+
+def download_model(model_id: str, local_name: str):
+    """Télécharge un modèle depuis Hugging Face."""
+    from huggingface_hub import snapshot_download
     
     base_models_dir = "base_models"
     if not os.path.exists(base_models_dir):
         os.makedirs(base_models_dir)
     
-    print("\n" + "=" * 80)
-    print("🤖 INITIALISATION DES MODÈLES DE TEST".center(80))
-    print("=" * 80)
+    model_path = os.path.join(base_models_dir, local_name)
     
-    # Modèle 1: GPT-2 simulé
-    gpt2_dir = os.path.join(base_models_dir, "gpt2-test")
-    if not os.path.exists(gpt2_dir):
-        os.makedirs(gpt2_dir)
-        
-        config = {
-            "architectures": ["GPT2LMHeadModel"],
-            "attention_probs_dropout_prob": 0.1,
-            "bos_token_id": 50256,
-            "eos_token_id": 50256,
-            "hidden_act": "gelu",
-            "hidden_dropout_prob": 0.1,
-            "hidden_size": 768,
-            "initializer_range": 0.02,
-            "intermediate_size": 3072,
-            "layer_norm_eps": 1e-12,
-            "max_position_embeddings": 1024,
-            "model_type": "gpt2",
-            "n_head": 12,
-            "n_layer": 12,
-            "n_positions": 1024,
-            "num_labels": 1,
-            "output_past": True,
-            "pad_token_id": 50256,
-            "summary_activation": None,
-            "summary_first_dropout": 0.1,
-            "summary_proj_to_labels": True,
-            "summary_type": "cls_index",
-            "summary_use_proj": True,
-            "vocab_size": 50257,
-        }
-        
-        with open(os.path.join(gpt2_dir, "config.json"), "w") as f:
-            json.dump(config, f, indent=2)
-        
-        # Créer un fichier model.json simulé
-        model_data = {
-            "model_type": "gpt2",
-            "architecture": "GPT2LMHeadModel",
-            "parameters": 124440064,
-            "vocab_size": 50257,
-            "max_sequence_length": 1024,
-            "hidden_size": 768,
-            "num_layers": 12,
-            "num_heads": 12,
-        }
-        
-        with open(os.path.join(gpt2_dir, "model.json"), "w") as f:
-            json.dump(model_data, f, indent=2)
-        
-        print(f"\n✓ Modèle créé: gpt2-test")
-        print(f"  📁 Localisation: {gpt2_dir}")
-        print(f"  📊 Paramètres: 124,440,064")
-        print(f"  🔤 Vocab size: 50,257")
+    # Vérifier si le modèle existe déjà
+    if os.path.exists(model_path) and len(os.listdir(model_path)) > 0:
+        print(f"✓ {local_name} existe déjà")
+        return model_path
     
-    # Modèle 2: Llama-2 simulé
-    llama_dir = os.path.join(base_models_dir, "llama2-test")
-    if not os.path.exists(llama_dir):
-        os.makedirs(llama_dir)
-        
-        config = {
-            "architectures": ["LlamaForCausalLM"],
-            "attention_dropout": 0.0,
-            "bos_token_id": 1,
-            "eos_token_id": 2,
-            "hidden_act": "silu",
-            "hidden_size": 4096,
-            "initializer_range": 0.02,
-            "intermediate_size": 11008,
-            "max_position_embeddings": 2048,
-            "model_type": "llama",
-            "num_attention_heads": 32,
-            "num_hidden_layers": 32,
-            "num_key_value_heads": 32,
-            "pad_token_id": 0,
-            "pretraining_tp": 1,
-            "rms_norm_eps": 1e-06,
-            "rope_scaling": None,
-            "rope_theta": 10000.0,
-            "tie_word_embeddings": False,
-            "torch_dtype": "float16",
-            "transformers_version": "4.30.0.dev0",
-            "use_cache": True,
-            "vocab_size": 32000,
-        }
-        
-        with open(os.path.join(llama_dir, "config.json"), "w") as f:
-            json.dump(config, f, indent=2)
-        
-        model_data = {
-            "model_type": "llama",
-            "architecture": "LlamaForCausalLM",
-            "parameters": 6738415616,
-            "vocab_size": 32000,
-            "max_sequence_length": 2048,
-            "hidden_size": 4096,
-            "num_layers": 32,
-            "num_heads": 32,
-        }
-        
-        with open(os.path.join(llama_dir, "model.json"), "w") as f:
-            json.dump(model_data, f, indent=2)
-        
-        print(f"\n✓ Modèle créé: llama2-test")
-        print(f"  📁 Localisation: {llama_dir}")
-        print(f"  📊 Paramètres: 6,738,415,616")
-        print(f"  🔤 Vocab size: 32,000")
+    print(f"\n📥 Téléchargement de {model_id}...")
+    print(f"   Destination: {model_path}")
     
-    # Modèle 3: Mistral simulé
-    mistral_dir = os.path.join(base_models_dir, "mistral-test")
-    if not os.path.exists(mistral_dir):
-        os.makedirs(mistral_dir)
+    try:
+        downloaded_path = snapshot_download(
+            repo_id=model_id,
+            local_dir=model_path,
+            local_dir_use_symlinks=False,
+        )
+        print(f"✓ {local_name} téléchargé avec succès")
         
-        config = {
-            "architectures": ["MistralForCausalLM"],
-            "attention_dropout": 0.0,
-            "bos_token_id": 1,
-            "eos_token_id": 2,
-            "hidden_act": "silu",
-            "hidden_size": 4096,
-            "initializer_range": 0.02,
-            "intermediate_size": 14336,
-            "max_position_embeddings": 32768,
-            "model_type": "mistral",
-            "num_attention_heads": 32,
-            "num_hidden_layers": 32,
-            "num_key_value_heads": 8,
-            "rms_norm_eps": 1e-05,
-            "rope_theta": 10000.0,
-            "sliding_window": 4096,
-            "tie_word_embeddings": False,
-            "vocab_size": 32000,
-        }
+        # Afficher les infos du modèle
+        config_path = os.path.join(downloaded_path, "config.json")
+        if os.path.exists(config_path):
+            with open(config_path, "r") as f:
+                config = json.load(f)
+                print(f"  📊 Architecture: {config.get('model_type', 'unknown')}")
+                print(f"  🔤 Vocab size: {config.get('vocab_size', 'unknown'):,}")
+                print(f"  📏 Hidden size: {config.get('hidden_size', 'unknown')}")
+                print(f"  🔢 Num layers: {config.get('num_hidden_layers', 'unknown')}")
         
-        with open(os.path.join(mistral_dir, "config.json"), "w") as f:
-            json.dump(config, f, indent=2)
-        
-        model_data = {
-            "model_type": "mistral",
-            "architecture": "MistralForCausalLM",
-            "parameters": 7325625344,
-            "vocab_size": 32000,
-            "max_sequence_length": 32768,
-            "hidden_size": 4096,
-            "num_layers": 32,
-            "num_heads": 32,
-        }
-        
-        with open(os.path.join(mistral_dir, "model.json"), "w") as f:
-            json.dump(model_data, f, indent=2)
-        
-        print(f"\n✓ Modèle créé: mistral-test")
-        print(f"  📁 Localisation: {mistral_dir}")
-        print(f"  📊 Paramètres: 7,325,625,344")
-        print(f"  🔤 Vocab size: 32,000")
+        return downloaded_path
+    
+    except Exception as e:
+        print(f"✗ Erreur lors du téléchargement de {model_id}: {e}")
+        return None
+
+
+def get_model_size(model_path: str) -> str:
+    """Calcule la taille totale du modèle."""
+    total_size = 0
+    for dirpath, dirnames, filenames in os.walk(model_path):
+        for filename in filenames:
+            filepath = os.path.join(dirpath, filename)
+            total_size += os.path.getsize(filepath)
+    
+    # Convertir en MB
+    size_mb = total_size / (1024 * 1024)
+    if size_mb > 1024:
+        return f"{size_mb / 1024:.2f} GB"
+    else:
+        return f"{size_mb:.2f} MB"
+
+
+def setup_models():
+    """Télécharge et initialise tous les modèles."""
     
     print("\n" + "=" * 80)
-    print("✅ Modèles de test initialisés avec succès!".center(80))
+    print("🤖 INITIALISATION DES MODÈLES RÉELS".center(80))
     print("=" * 80)
+    
+    # Vérifier huggingface_hub
+    if not install_huggingface_hub():
+        print("\n⚠️  Impossible d'installer huggingface_hub")
+        print("   Installez manuellement: pip install huggingface_hub")
+        return False
+    
+    # Modèles à télécharger
+    models = [
+        {
+            "id": "gpt2",
+            "name": "gpt2",
+            "description": "GPT-2 (124M paramètres)",
+        },
+        {
+            "id": "distilgpt2",
+            "name": "distilgpt2",
+            "description": "DistilGPT-2 (82M paramètres, plus rapide)",
+        },
+        {
+            "id": "meta-llama/Llama-2-7b-hf",
+            "name": "llama2-7b",
+            "description": "Llama 2 7B (7B paramètres)",
+            "requires_auth": True,
+        },
+    ]
+    
+    print("\n📦 MODÈLES DISPONIBLES:")
+    print("=" * 80)
+    
+    for i, model in enumerate(models, 1):
+        auth_note = " (nécessite authentification Hugging Face)" if model.get("requires_auth") else ""
+        print(f"{i}. {model['description']}{auth_note}")
+    
+    print("\n" + "=" * 80)
+    print("Téléchargement des modèles...")
+    print("=" * 80)
+    
+    downloaded_models = []
+    
+    # Télécharger GPT-2 (toujours disponible)
+    print("\n[1/3] GPT-2...")
+    path = download_model("gpt2", "gpt2")
+    if path:
+        size = get_model_size(path)
+        print(f"      Taille: {size}")
+        downloaded_models.append(("gpt2", path))
+    
+    # Télécharger DistilGPT-2 (plus léger)
+    print("\n[2/3] DistilGPT-2...")
+    path = download_model("distilgpt2", "distilgpt2")
+    if path:
+        size = get_model_size(path)
+        print(f"      Taille: {size}")
+        downloaded_models.append(("distilgpt2", path))
+    
+    # Télécharger Llama-2 (optionnel, peut nécessiter authentification)
+    print("\n[3/3] Llama-2 7B...")
+    print("      ⚠️  Nécessite un token Hugging Face")
+    print("      Voir: https://huggingface.co/meta-llama/Llama-2-7b-hf")
+    try:
+        path = download_model("meta-llama/Llama-2-7b-hf", "llama2-7b")
+        if path:
+            size = get_model_size(path)
+            print(f"      Taille: {size}")
+            downloaded_models.append(("llama2-7b", path))
+    except Exception as e:
+        print(f"      ⚠️  Llama-2 non disponible: {e}")
+        print("      Vous pouvez le télécharger manuellement plus tard")
+    
+    # Résumé
+    print("\n" + "=" * 80)
+    print("✅ INITIALISATION TERMINÉE".center(80))
+    print("=" * 80)
+    
+    if downloaded_models:
+        print(f"\n✓ {len(downloaded_models)} modèle(s) téléchargé(s):")
+        for name, path in downloaded_models:
+            size = get_model_size(path)
+            print(f"  • {name}: {size}")
+    else:
+        print("\n⚠️  Aucun modèle n'a pu être téléchargé")
+        return False
     
     print("\n📚 Prochaines étapes:")
     print("  1. Lancer: python orchestrator.py --choose-model --topic 'Python'")
@@ -185,7 +181,10 @@ def create_test_models():
     print("  3. L'entraînement commencera automatiquement")
     
     print("\n" + "=" * 80 + "\n")
+    
+    return True
 
 
 if __name__ == "__main__":
-    create_test_models()
+    success = setup_models()
+    sys.exit(0 if success else 1)
