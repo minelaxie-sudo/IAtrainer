@@ -105,6 +105,17 @@ Après configuration, l'API démarre sur `http://localhost:8000`
 
 ### 2. Lancer une session d'entraînement
 
+**Paramètres :**
+
+- `--topic` (requis) - Sujet d'entraînement (ex: "Unity development")
+- `--pages` (optionnel, défaut: 5) - Nombre de pages à scraper
+- `--iterations` (optionnel, défaut: 10) - Nombre d'itérations d'entraînement
+- `--code-only` (optionnel) - Scraper uniquement du code
+- `--dashboard-url` (optionnel) - URL du dashboard UnityIAPro
+- `--no-dashboard` (optionnel) - Désactiver le dashboard
+
+**Pour la liste complète des paramètres, voir `COMPLETE_GUIDE.md`**
+
 #### Avec intégration UnityIAPro
 ```bash
 python orchestrator.py \
@@ -137,6 +148,17 @@ python orchestrator.py \
 ```
 
 Le visualiseur affichera le progrès en direct avec les métriques d'apprentissage.
+
+#### Entraînement rapide (test)
+```bash
+python orchestrator.py \
+  --topic "Python basics" \
+  --pages 2 \
+  --iterations 3 \
+  --no-dashboard
+```
+
+Durée : ~2 minutes
 
 #### Sans intégration (mode standalone)
 ```bash
@@ -180,11 +202,16 @@ IAtrainer/
 python model_manager.py
 ```
 
-Menu interactif pour :
-- Charger un modèle de base
-- Télécharger depuis Hugging Face (ex: `meta-llama/Llama-2-7b`)
-- Télécharger depuis Ollama (ex: `llama2`, `mistral`)
-- Créer un template de modèle personnalisé
+**Options disponibles :**
+
+1. **Charger un modèle de base** - Charge un modèle existant dans `base_models/`
+2. **Charger un modèle entraîné** - Charge un modèle que vous avez entraîné
+3. **Créer un template** - Crée un fichier JSON pour un modèle personnalisé
+4. **Télécharger Hugging Face** - Télécharge depuis Hugging Face
+5. **Télécharger Ollama** - Télécharge depuis Ollama
+6. **Afficher les infos** - Affiche les détails du modèle actuel
+
+**Pour plus de détails, voir `COMPLETE_GUIDE.md`**
 
 ### Méthode 2 : Copier manuellement
 
@@ -216,6 +243,15 @@ L'entraînement sauvegarde automatiquement :
 3. Les métriques et apprentissages
 
 Fichiers générés dans le dossier `trained_models/`
+
+## 📊 Documentation complète
+
+**Voir `COMPLETE_GUIDE.md` pour :**
+- Tutoriels détaillés
+- Explication de chaque option
+- Explication de chaque paramètre
+- Exemples pratiques
+- Dépannage
 
 ## 📊 Flux de Travail
 
