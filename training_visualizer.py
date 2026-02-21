@@ -198,7 +198,7 @@ class TrainingVisualizer:
         print(f"Itérations complétées: {len(self.training_data['iterations'])}/{self.training_data['total_iterations']}")
         print(f"Tokens traités: {self.training_data['total_tokens_processed']}")
 
-        if self.training_data["end_time"]:
+        if self.training_data.get("end_time"):
             duration = self.training_data.get("training_duration_seconds", 0)
             minutes = int(duration // 60)
             seconds = int(duration % 60)

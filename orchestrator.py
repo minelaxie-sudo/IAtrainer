@@ -249,6 +249,63 @@ class IAtrainerOrchestrator:
             logger.error(f"✗ Erreur lors de l'envoi au dashboard: {e}")
 
 
+def _choose_model_interactive():
+    """Menu interactif pour choisir le modèle."""
+    import os
+    
+    base_models_dir = "base_models"
+    trained_models_dir = "trained_models"
+    
+    # Lister les modèles de base
+    base_models = []
+    if os.path.exists(base_models_dir):
+        base_models = [d for d in os.listdir(base_models_dir) if os.path.isdir(os.path.join(base_models_dir, d))]
+    
+    # Lister les modèles entraînés
+    trained_models = []
+    if os.path.exists(trained_models_dir):
+        trained_models = [f[:-5] for f in os.listdir(trained_models_dir) if f.endswith(".json") and not f.endswith(".gguf.json")]
+    
+    print("\n" + "=" * 60)
+    print("🤖 SÉLECTION DU MODÈLE".center(60))
+    print("=" * 60)
+    
+    all_models = []
+    idx = 1
+    
+    if base_models:
+        print("\n📦 MODÈLES DE BASE:")
+        for model in base_models:
+            print(f"  {idx}. {model}")
+            all_models.append((model, "base"))
+            idx += 1
+    
+    if trained_models:
+        print("\n✅ MODÈLES ENTRAÎNÉS:")
+        for model in trained_models:
+            print(f"  {idx}. {model}")
+            all_models.append((model, "trained"))
+            idx += 1
+    
+    if not all_models:
+        print("\n⚠️  Aucun modèle trouvé!")
+        print("Téléchargez d'abord un modèle avec: python model_manager.py")
+        return "llama2-unity"
+    
+    # Demander le choix
+    while True:
+        try:
+            choice = int(input(f"\nChoisissez un modèle (1-{len(all_models)}): "))
+            if 1 <= choice <= len(all_models):
+                model_name, model_type = all_models[choice - 1]
+                print(f"\n✓ Modèle sélectionné: {model_name} ({model_type})")
+                return model_name
+            else:
+                print(f"Veuillez entrer un numéro entre 1 et {len(all_models)}")
+        except ValueError:
+            print("Veuillez entrer un numéro valide")
+
+
 def main():
     """Point d'entrée principal."""
     import argparse
@@ -288,15 +345,34 @@ def main():
         action="store_true",
         help="Scraper uniquement du code (GitHub, etc.) pour un modèle full codage",
     )
+    parser.add_argument(
+        "--model",
+        type=str,
+        default="llama2-unity",
+        help="Nom du modèle à entraîner (ex: gpt2-base, mistral-7b, llama2-unity)",
+    )
+    parser.add_argument(
+        "--choose-model",
+        action="store_true",
+        help="Afficher un menu pour choisir le modèle interactivement",
+    )
 
     args = parser.parse_args()
+
+    # Choisir le modèle
+    model_name = args.model
+    if args.choose_model:
+        model_name = _choose_model_interactive()
 
     # Créer l'orchestrateur
     orchestrator = IAtrainerOrchestrator(
         dashboard_url=args.dashboard_url,
-        model_name="llama2-unity",
+        model_name=model_name,
     )
 
+    # Afficher le modèle sélectionné
+    logger.info(f"Modèle sélectionné: {model_name}")
+    
     # Lancer la session d'entraînement
     result = orchestrator.run_training_session(
         topic=args.topic,
