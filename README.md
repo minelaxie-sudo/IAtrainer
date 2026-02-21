@@ -55,6 +55,19 @@ source venv/bin/activate  # Sur Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
+### Dépendances optionnelles
+
+Pour le fine-tuning réel (optionnel) :
+```bash
+# CPU uniquement
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+
+# Transformers pour fine-tuning
+pip install transformers scikit-learn
+```
+
+**Note** : Les dépendances principales fonctionnent sans torch.
+
 ## 🚀 Utilisation
 
 ### 1. Lancer l'API du modèle (optionnel)
