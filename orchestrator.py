@@ -5,11 +5,13 @@ Gère le scraping, l'entraînement multi-agents et l'intégration avec UnityIAPr
 
 import logging
 import time
+import os
 from typing import List, Dict, Optional
 from scraper import WebScraper
 from multi_agent_system import MultiAgentSystem
 from trpc_client import TRPCClient
 from training_visualizer import TrainingVisualizer
+from model_analyzer import ModelAnalyzer
 
 logging.basicConfig(
     level=logging.INFO,
@@ -32,6 +34,16 @@ class IAtrainerOrchestrator:
         self.model_name = model_name
         self.training_data: List[Dict] = []
         self.visualizer = TrainingVisualizer(model_name)
+        self.analyzer = ModelAnalyzer(model_name)
+        self._create_required_directories()
+
+    def _create_required_directories(self):
+        """Crée les répertoires nécessaires s'ils n'existent pas."""
+        directories = ["base_models", "trained_models", "model_stats"]
+        for directory in directories:
+            if not os.path.exists(directory):
+                os.makedirs(directory)
+                logger.info(f"✓ Dossier créé: {directory}/")
 
     def scrape_training_data(self, topic: str, num_pages: int = 5, code_only: bool = False) -> List[Dict]:
         """
@@ -170,6 +182,30 @@ class IAtrainerOrchestrator:
             # Sauvegarder le modèle
             model_file = self.visualizer.save_model()
             gguf_file = self.visualizer.export_for_ollama()
+            # Étape 6: Analyser les paramètres du modèle
+            logger.info("\n[ÉTAPE 6] Analyse des paramètres du modèle...")
+            before_params = self.analyzer.estimate_parameters()
+            after_params = self.analyzer.estimate_parameters()
+            
+            # Afficher l'analyse
+            self.analyzer.display_training_summary(
+                before_params,
+                after_params,
+                self.visualizer.training_data,
+                model_file,
+            )
+            
+            # Sauvegarder les statistiques
+            stats_file = self.analyzer.save_training_stats(
+                before_params,
+                after_params,
+                self.visualizer.training_data,
+                model_file,
+            )
+            
+            # Afficher l'historique
+            logger.info("\n[ÉTAPE 7] Affichage de l'historique d'entraînement...")
+            self.analyzer.display_training_history()
 
             if dashboard_enabled and session_id:
                 self.trpc_client.update_session_status("completed")
