@@ -1,5 +1,7 @@
 # IAtrainer - Système d'Entraînement Multi-Agents
 
+**👉 POUR DÉBUTER : Lire `QUICK_START.md` pour un tutoriel pas à pas !**
+
 Un système complet pour entraîner un modèle LLM libre (Llama, Mistral, etc.) spécialisé dans la génération de code, utilisant un système multi-agents (Coder A, Coder B, Arbitre) qui scrape automatiquement internet. Le modèle entraîné est directement utilisable avec **Ollama** et s'intègre parfaitement avec **UnityIAPro** pour générer automatiquement du code Unity/Unreal.
 
 ## 🎯 Fonctionnalités
